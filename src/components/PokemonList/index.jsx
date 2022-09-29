@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import api from '../../services/api';
-import Button from '../Button';
-import Container from '../Container';
-import Header from '../Header';
-import PokemonCard from '../PokemonCard';
+import { useEffect, useState } from "react";
+import api from "../../services/api";
+import Button from "../Button";
+import Container from "../Container";
+import Header from "../Header";
+import PokemonCard from "../PokemonCard";
 
-import { List, PokemonItem, ContainerButton } from './styles';
+import { List, PokemonItem, ContainerButton } from "./styles";
 
 // fetch('https://pokeapi.co/api/v2/pokemon?limit=151&offset=0')
 //   .then(response => response.json())
@@ -14,50 +14,45 @@ import { List, PokemonItem, ContainerButton } from './styles';
 const PokemonList = () => {
   const [pokemons, setPokemons] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [offset, setOffset] = useState(0);
-  const [limit] = useState(500);
+  const [page, setPage] = useState(0);
   const [isNextDisabled, setIsNextDisabled] = useState(false);
   const [isPreviousDisabled, setIsPreviousDisabled] = useState(true);
   const [currentPokemon, setCurrentPokemon] = useState(null);
-  const [name, setName] = useState();
 
   useEffect(() => {
     setLoading(true);
 
-    api.get('pokemon', {
-      params: {
-        limit,
-        offset: offset * limit
-      },
-    })
-      .then(response => {
+    api
+      .get("pokemon", {
+        params: {
+          limit: 151,
+          offset: page * 151,
+        },
+      })
+      .then((response) => {
         const { results, next, previous } = response.data;
 
         setPokemons(results);
         setIsNextDisabled(!next);
         setIsPreviousDisabled(!previous);
       })
-      .catch(error => console.log(error))
+      .catch((error) => console.log(error))
       .finally(() => {
-        setLoading(false)
+        setLoading(false);
       });
-  }, [offset, limit]);
+  }, [page]);
 
-  useEffect(() => {
-    if (name) {
-      api.get(`pokemon/${name}`)
-        .then((response) =>
-          setCurrentPokemon(response.data)
-        );
-    }
-  }, [name]);
+  function getPokemon(name) {
+    api
+      .get(`pokemon/${name}`)
+      .then((response) => setCurrentPokemon(response.data));
+  }
 
   return (
     <>
       <Header />
       <Container>
-        {
-          currentPokemon &&
+        {currentPokemon && (
           <PokemonItem>
             <img
               src={currentPokemon.sprites.front_default}
@@ -65,19 +60,18 @@ const PokemonList = () => {
             />
             <span>{currentPokemon.name}</span>
           </PokemonItem>
-
-        }
+        )}
 
         <ContainerButton>
           <Button
-            onClick={() => setOffset(offset - 1)}
+            onClick={() => setPage(page - 1)}
             disabled={isPreviousDisabled}
             backgroundColor="#f10"
           >
             Previous
           </Button>
           <Button
-            onClick={() => setOffset(offset + 1)}
+            onClick={() => setPage(page + 1)}
             disabled={isNextDisabled}
             backgroundColor="#f10"
           >
@@ -85,24 +79,19 @@ const PokemonList = () => {
           </Button>
         </ContainerButton>
 
-        {
-          loading
-            ? <span>Carregando...</span>
-            :
-            <List>
-              {
-                pokemons
-                  ?.map(({ name }) =>
-                    <PokemonCard
-                      key={name}
-                      name={name}
-                      onClick={() => setName(name)}
-                    />
-                  )
-              }
-            </List>
-        }
-
+        {loading ? (
+          <span>Carregando...</span>
+        ) : (
+          <List>
+            {pokemons?.map(({ name }) => (
+              <PokemonCard
+                key={name}
+                name={name}
+                onClick={() => getPokemon(name)}
+              />
+            ))}
+          </List>
+        )}
       </Container>
     </>
   );
